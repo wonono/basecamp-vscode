@@ -7,9 +7,13 @@ import { ProjectTreeProvider } from "./views/projectTreeProvider";
 import { CampfirePanel } from "./panels/campfirePanel";
 import { MessagePanel } from "./panels/messagePanel";
 import { TodoPanel } from "./panels/todoPanel";
+import { BasecampContentProvider } from "./providers/basecampContentProvider";
+import { BasecampCodeLensProvider } from "./providers/basecampCodeLensProvider";
 import { postMessage } from "./api/messages";
-import { createTodo } from "./api/todos";
+import { postComment } from "./api/comments";
+import { createTodo, completeTodo, uncompleteTodo } from "./api/todos";
 import type { Campfire, Message, TodoList, Project } from "./api/types";
+import type { DocumentMeta } from "./providers/basecampContentProvider";
 import {
   ProjectItem,
   DockToolItem,
@@ -52,17 +56,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   updateStatusBar();
   context.subscriptions.push(statusBar);
 
-  // Open content in editor (for Option+K / AI assist)
-  context.subscriptions.push(
-    vscode.commands.registerCommand("basecamp.openInEditor", async (data: { title: string; content: string }) => {
-      const doc = await vscode.workspace.openTextDocument({
-        content: data.content,
-        language: "markdown",
-      });
-      await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
-    })
-  );
-
   // Initialize services
   pollingService = new PollingService();
   context.subscriptions.push(pollingService);
@@ -83,7 +76,121 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   );
 
-  // Initialize tree view
+  // --- Markdown content provider + CodeLens ---
+  const contentProvider = new BasecampContentProvider(client);
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider("basecamp", contentProvider)
+  );
+
+  const codeLensProvider = new BasecampCodeLensProvider(contentProvider);
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider({ scheme: "basecamp" }, codeLensProvider)
+  );
+
+  // Open content in editor (for Campfire's ⎘ button)
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.openInEditor", async (data: { title: string; content: string }) => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: data.content,
+        language: "markdown",
+      });
+      await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
+    })
+  );
+
+  // --- CodeLens commands ---
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.refreshDoc", (uri: vscode.Uri) => {
+      contentProvider.refresh(uri);
+      codeLensProvider.notifyChange();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.openInBrowser", (url: string) => {
+      vscode.env.openExternal(vscode.Uri.parse(url));
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.richView", (uri: vscode.Uri, meta: DocumentMeta) => {
+      // Re-open as webview panel
+      if (meta.type === "message" && meta.messageId) {
+        // We need the message object — fetch it
+        client.get<Message>(`/buckets/${meta.projectId}/messages/${meta.messageId}.json`).then((msg) => {
+          const project = { id: meta.projectId, name: "Basecamp" } as Project;
+          MessagePanel.show(msg, project, client, context.extensionUri);
+        });
+      } else if (meta.type === "todolist") {
+        client.get<TodoList>(`/todolists/${meta.entityId}.json`).then((list) => {
+          const project = { id: meta.projectId, name: "Basecamp" } as Project;
+          TodoPanel.show(list, project, client, context.extensionUri);
+        });
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.addComment", async (uri: vscode.Uri, projectId: number, recordingId: number) => {
+      const content = await vscode.window.showInputBox({
+        prompt: "Write a comment",
+        placeHolder: "Your comment...",
+      });
+      if (!content) return;
+      try {
+        await postComment(client, projectId, recordingId, content);
+        contentProvider.refresh(uri);
+        codeLensProvider.notifyChange();
+        vscode.window.showInformationMessage("Comment posted.");
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to post comment: ${(err as Error).message}`);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.completeTodo", async (uri: vscode.Uri, projectId: number, todoId: number) => {
+      try {
+        await completeTodo(client, projectId, todoId);
+        contentProvider.refresh(uri);
+        codeLensProvider.notifyChange();
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to complete to-do: ${(err as Error).message}`);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.uncompleteTodo", async (uri: vscode.Uri, projectId: number, todoId: number) => {
+      try {
+        await uncompleteTodo(client, projectId, todoId);
+        contentProvider.refresh(uri);
+        codeLensProvider.notifyChange();
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to uncomplete to-do: ${(err as Error).message}`);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.md.addTodo", async (uri: vscode.Uri, projectId: number, todoListId: number) => {
+      const content = await vscode.window.showInputBox({
+        prompt: "To-do title",
+        placeHolder: "What needs to be done?",
+      });
+      if (!content) return;
+      try {
+        await createTodo(client, projectId, todoListId, content);
+        contentProvider.refresh(uri);
+        codeLensProvider.notifyChange();
+        vscode.window.showInformationMessage(`To-do "${content}" created.`);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to create to-do: ${(err as Error).message}`);
+      }
+    })
+  );
+
+  // --- Tree view ---
   const treeProvider = new ProjectTreeProvider(client, authManager);
   const treeView = vscode.window.createTreeView("basecamp-projects", {
     treeDataProvider: treeProvider,
@@ -108,7 +215,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   });
 
-  // Register commands
+  // --- Tree commands ---
   context.subscriptions.push(
     vscode.commands.registerCommand("basecamp.signIn", async () => {
       try {
@@ -150,25 +257,39 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     )
   );
 
+  // Messages now open as Markdown documents
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "basecamp.openMessage",
-      (message: Message, project: Project) => {
-        MessagePanel.show(message, project, client, context.extensionUri);
+      async (message: Message, _project: Project) => {
+        const uri = BasecampContentProvider.messageUri(
+          message.bucket.id,
+          message.id,
+          message.subject
+        );
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc, { preview: false });
       }
     )
   );
 
+  // Todos now open as Markdown documents
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "basecamp.openTodoList",
-      (todoList: TodoList, project: Project) => {
-        TodoPanel.show(todoList, project, client, context.extensionUri);
+      async (todoList: TodoList, _project: Project) => {
+        const uri = BasecampContentProvider.todoListUri(
+          todoList.bucket.id,
+          todoList.id,
+          todoList.name
+        );
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc, { preview: false });
       }
     )
   );
 
-  // Open in Basecamp (browser)
+  // Open in Basecamp (browser) — tree context menu
   context.subscriptions.push(
     vscode.commands.registerCommand("basecamp.openInBrowser", (item: unknown) => {
       let url: string | undefined;
@@ -207,7 +328,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
-  // Create new message
+  // Create new message (tree context menu)
   context.subscriptions.push(
     vscode.commands.registerCommand("basecamp.createMessage", async (item: unknown) => {
       if (!(item instanceof DockToolItem)) return;
@@ -239,7 +360,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
-  // Create new todo (quick add from tree)
+  // Create new todo (tree context menu)
   context.subscriptions.push(
     vscode.commands.registerCommand("basecamp.createTodo", async (item: unknown) => {
       if (!(item instanceof DockToolItem)) return;
