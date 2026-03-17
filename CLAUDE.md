@@ -30,12 +30,14 @@ Then remind the user to **Reload Window** (Ctrl+Shift+P → "Reload Window") —
 
 ## Publishing to Marketplace
 
-Azure DevOps PAT doesn't work for this account. Use manual upload instead:
+Azure DevOps PAT doesn't work for this account. Use manual upload instead.
 
-1. Bump version in `packages/extension/package.json`
-2. Run the rebuild command above to generate a new `.vsix`
-3. Go to https://marketplace.visualstudio.com/manage
-4. Click "..." on the extension → **Update** → drag & drop the `.vsix`
+When the user asks to publish or release a new version:
+
+1. Bump the patch version in `packages/extension/package.json` (e.g. 0.3.0 → 0.3.1) — use minor for feature releases, patch for fixes
+2. If the MCP server was changed, rebuild it: `cd packages/mcp-server && npm run build`
+3. Run the full rebuild + reinstall cycle (see above)
+4. Remind the user to **Reload Window**, then drag & drop the `.vsix` on https://marketplace.visualstudio.com/manage → "..." → **Update**
 
 ## Key conventions
 
