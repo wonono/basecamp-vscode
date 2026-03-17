@@ -109,6 +109,14 @@ export class CampfirePanel {
       case "ready":
         await this.loadInitialLines();
         break;
+      case "openInEditor": {
+        const { text } = msg.data as { text: string };
+        vscode.commands.executeCommand("basecamp.openInEditor", {
+          title: `Campfire — ${this.project.name}`,
+          content: text,
+        });
+        break;
+      }
       case "sendLine": {
         const { content, clientId } = msg.data as {
           content: string;

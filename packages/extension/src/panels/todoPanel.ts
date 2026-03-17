@@ -62,6 +62,14 @@ export class TodoPanel {
       case "ready":
         await this.loadTodos();
         break;
+      case "openInEditor": {
+        const { text } = msg.data as { text: string };
+        vscode.commands.executeCommand("basecamp.openInEditor", {
+          title: `To-dos — ${this.todoList.name}`,
+          content: text,
+        });
+        break;
+      }
       case "toggleTodo": {
         const { todoId, completed } = msg.data as {
           todoId: number;

@@ -13,6 +13,7 @@
       '<div class="input-area">' +
       '  <textarea id="input" placeholder="Type a message..." rows="1"></textarea>' +
       '  <button id="send-btn">Send</button>' +
+      '  <button id="editor-btn" title="Open in Editor (Option+K)">⎘</button>' +
       "</div>";
 
     messagesContainer = document.getElementById("messages");
@@ -39,6 +40,22 @@
     });
 
     sendBtn.addEventListener("click", sendMessage);
+
+    var editorBtn = document.getElementById("editor-btn");
+    editorBtn.addEventListener("click", function () {
+      var msgs = messagesContainer.querySelectorAll(".message");
+      var lines = [];
+      for (var m = 0; m < msgs.length; m++) {
+        var author = msgs[m].querySelector(".message-author");
+        var time = msgs[m].querySelector(".message-time");
+        var content = msgs[m].querySelector(".message-content");
+        if (author && content) {
+          var prefix = "[" + (time ? time.textContent : "") + "] " + author.textContent + ": ";
+          lines.push(prefix + content.textContent);
+        }
+      }
+      window._postMessage("openInEditor", { text: lines.join("\n") });
+    });
 
     // Listen for messages from extension
     window._onMessage("init", function (data) {
@@ -98,8 +115,10 @@
       messagesContainer.innerHTML = '<div class="empty-state">No messages yet. Start the conversation!</div>';
       return;
     }
-    for (var i = 0; i < lines.length; i++) {
-      appendSingleLine(lines[i]);
+    // API returns newest first — reverse to show oldest at top, newest at bottom
+    var sorted = lines.slice().reverse();
+    for (var i = 0; i < sorted.length; i++) {
+      appendSingleLine(sorted[i]);
     }
     scrollToBottom();
   }

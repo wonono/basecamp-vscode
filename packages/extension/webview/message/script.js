@@ -56,6 +56,8 @@
       '    <span class="meta">' + date + "</span>" +
       "  </div>" +
       "</div>" +
+      '  <button class="open-editor-btn" id="open-editor-btn" title="Open in Editor (Option+K)">Open in Editor</button>' +
+      "</div>" +
       '<div class="message-body">' + message.content + "</div>";
 
     // Comments section
@@ -85,6 +87,24 @@
     commentTextarea = document.getElementById("comment-input");
     var postBtn = document.getElementById("post-comment-btn");
     postBtn.addEventListener("click", postComment);
+
+    var editorBtn = document.getElementById("open-editor-btn");
+    if (editorBtn) {
+      editorBtn.addEventListener("click", function () {
+        var body = threadContainer.querySelector(".message-body");
+        var text = "# " + escapeHtml(message.subject) + "\n\n" + (body ? body.textContent : "");
+        var commentEls = threadContainer.querySelectorAll(".comment");
+        if (commentEls.length > 0) {
+          text += "\n\n---\n## Comments\n";
+          for (var c = 0; c < commentEls.length; c++) {
+            var author = commentEls[c].querySelector(".comment-author");
+            var cbody = commentEls[c].querySelector(".comment-body");
+            text += "\n**" + (author ? author.textContent : "") + ":** " + (cbody ? cbody.textContent : "") + "\n";
+          }
+        }
+        window._postMessage("openInEditor", { text: text });
+      });
+    }
   }
 
   function createCommentHtml(comment) {

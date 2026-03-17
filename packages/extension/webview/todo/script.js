@@ -123,6 +123,7 @@
       '<div class="todo-header">' +
       "  <h1>" + escapeHtml(data.listName) + "</h1>" +
       '  <div class="todo-ratio">' + escapeHtml(data.completedRatio) + " completed</div>" +
+      '  <button class="open-editor-btn" id="open-editor-btn" title="Open in Editor (Option+K)">Open in Editor</button>' +
       "</div>";
 
     // Add todo form
@@ -197,6 +198,22 @@
         descInput.style.display = visible ? "none" : "block";
         toggleDesc.textContent = visible ? "+ Add notes" : "- Hide notes";
         if (!visible) descInput.focus();
+      });
+    }
+
+    // Bind open in editor
+    var editorBtn = document.getElementById("open-editor-btn");
+    if (editorBtn) {
+      editorBtn.addEventListener("click", function () {
+        var items = todoPanel.querySelectorAll(".todo-item:not(.completed)");
+        var lines = ["# " + data.listName, ""];
+        for (var t = 0; t < items.length; t++) {
+          var textEl = items[t].querySelector(".todo-text");
+          var notesEl = items[t].querySelector(".todo-notes");
+          lines.push("- [ ] " + (textEl ? textEl.textContent : ""));
+          if (notesEl) lines.push("  " + notesEl.textContent.trim());
+        }
+        window._postMessage("openInEditor", { text: lines.join("\n") });
       });
     }
 

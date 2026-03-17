@@ -63,6 +63,14 @@ export class MessagePanel {
       case "ready":
         await this.loadContent();
         break;
+      case "openInEditor": {
+        const { text } = msg.data as { text: string };
+        vscode.commands.executeCommand("basecamp.openInEditor", {
+          title: this.message.subject,
+          content: text,
+        });
+        break;
+      }
       case "postComment": {
         const { content } = msg.data as { content: string };
         try {

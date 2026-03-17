@@ -76,6 +76,21 @@
   align-self: flex-end;
 }
 
+#editor-btn {
+  background: none;
+  border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.3));
+  color: var(--vscode-descriptionForeground);
+  font-size: 1.1em;
+  padding: 4px 8px;
+  min-width: 32px;
+}
+
+#editor-btn:hover {
+  color: var(--vscode-foreground);
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.1));
+}
+
 /* Empty state */
 .empty-state {
   display: flex;

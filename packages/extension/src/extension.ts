@@ -52,6 +52,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   updateStatusBar();
   context.subscriptions.push(statusBar);
 
+  // Open content in editor (for Option+K / AI assist)
+  context.subscriptions.push(
+    vscode.commands.registerCommand("basecamp.openInEditor", async (data: { title: string; content: string }) => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: data.content,
+        language: "markdown",
+      });
+      await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
+    })
+  );
+
   // Initialize services
   pollingService = new PollingService();
   context.subscriptions.push(pollingService);
