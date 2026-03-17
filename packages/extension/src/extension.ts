@@ -113,7 +113,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("basecamp.md.richView", (uri: vscode.Uri, meta: DocumentMeta) => {
+    vscode.commands.registerCommand("basecamp.md.richView", (_uri: vscode.Uri, meta: DocumentMeta) => {
       // Re-open as webview panel
       if (meta.type === "message" && meta.messageId) {
         // We need the message object — fetch it
@@ -257,34 +257,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     )
   );
 
-  // Messages now open as Markdown documents
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "basecamp.openMessage",
-      async (message: Message, _project: Project) => {
-        const uri = BasecampContentProvider.messageUri(
-          message.bucket.id,
-          message.id,
-          message.subject
-        );
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc, { preview: false });
+      (message: Message, project: Project) => {
+        MessagePanel.show(message, project, client, context.extensionUri);
       }
     )
   );
 
-  // Todos now open as Markdown documents
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "basecamp.openTodoList",
-      async (todoList: TodoList, _project: Project) => {
-        const uri = BasecampContentProvider.todoListUri(
-          todoList.bucket.id,
-          todoList.id,
-          todoList.name
-        );
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc, { preview: false });
+      (todoList: TodoList, project: Project) => {
+        TodoPanel.show(todoList, project, client, context.extensionUri);
       }
     )
   );
@@ -339,16 +325,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       });
       if (!subject) return;
 
-      const content = await vscode.window.showInputBox({
-        prompt: "Message content",
-        placeHolder: "Enter the message content...",
-      });
-      if (!content) return;
-
       try {
         const boardUrl = item.dock.url;
         const board = await client.get<{ id: number }>(boardUrl);
-        await postMessage(client, project.id, board.id, subject, content);
+        await postMessage(client, project.id, board.id, subject, "");
         vscode.window.showInformationMessage(`Message "${subject}" posted.`);
         client.clearCache();
         treeProvider.refresh();
