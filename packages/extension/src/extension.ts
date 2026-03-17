@@ -343,8 +343,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Create new todo (tree context menu)
   context.subscriptions.push(
     vscode.commands.registerCommand("basecamp.createTodo", async (item: unknown) => {
-      if (!(item instanceof DockToolItem)) return;
-      const project = item.project;
       const content = await vscode.window.showInputBox({
         prompt: "To-do title",
         placeHolder: "What needs to be done?",
@@ -352,28 +350,38 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (!content) return;
 
       try {
-        const todosetUrl = item.dock.url;
-        const todoset = await client.get<{ todolists_url: string }>(todosetUrl);
-        const lists = await client.getPaginated<{ id: number; name: string }>(
-          todoset.todolists_url
-        );
-        if (lists.length === 0) {
-          vscode.window.showWarningMessage("No to-do lists found in this project.");
-          return;
-        }
-        let listId = lists[0].id;
-        if (lists.length > 1) {
-          const pick = await vscode.window.showQuickPick(
-            lists.map((l) => ({ label: l.name, id: l.id })),
-            { placeHolder: "Pick a to-do list" }
+        if (item instanceof TodoListItem) {
+          // Specific list — create directly without picker
+          await createTodo(client, item.project.id, item.todoList.id, content);
+          vscode.window.showInformationMessage(`To-do "${content}" created.`);
+          client.clearCache();
+          treeProvider.refresh();
+        } else if (item instanceof DockToolItem) {
+          // Dock level — fetch lists and pick one if multiple
+          const todoset = await client.get<{ todolists_url: string }>(item.dock.url);
+          const lists = await client.getPaginated<{ id: number; name: string }>(
+            todoset.todolists_url
           );
-          if (!pick) return;
-          listId = pick.id;
+          const activeLists = lists.filter((l) => !(l as { completed?: boolean }).completed);
+          const candidates = activeLists.length > 0 ? activeLists : lists;
+          if (candidates.length === 0) {
+            vscode.window.showWarningMessage("No to-do lists found in this project.");
+            return;
+          }
+          let listId = candidates[0].id;
+          if (candidates.length > 1) {
+            const pick = await vscode.window.showQuickPick(
+              candidates.map((l) => ({ label: l.name, id: l.id })),
+              { placeHolder: "Pick a to-do list" }
+            );
+            if (!pick) return;
+            listId = pick.id;
+          }
+          await createTodo(client, item.project.id, listId, content);
+          vscode.window.showInformationMessage(`To-do "${content}" created.`);
+          client.clearCache();
+          treeProvider.refresh();
         }
-        await createTodo(client, project.id, listId, content);
-        vscode.window.showInformationMessage(`To-do "${content}" created.`);
-        client.clearCache();
-        treeProvider.refresh();
       } catch (err) {
         vscode.window.showErrorMessage(
           `Failed to create to-do: ${(err as Error).message}`

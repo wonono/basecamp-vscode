@@ -161,6 +161,23 @@ button:disabled {
   background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.1));
 }
 
+.copy-ai-btn {
+  background: none;
+  border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.3));
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.8em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.copy-ai-btn:hover {
+  color: var(--vscode-foreground);
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.1));
+}
+
 /* Loading spinner */
 .loading {
   display: flex;

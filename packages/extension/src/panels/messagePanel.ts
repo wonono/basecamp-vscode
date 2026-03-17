@@ -71,6 +71,12 @@ export class MessagePanel {
         });
         break;
       }
+      case "copyForAI": {
+        const { text } = msg.data as { text: string };
+        await vscode.env.clipboard.writeText(text);
+        vscode.window.showInformationMessage("Basecamp context copied to clipboard.");
+        break;
+      }
       case "postComment": {
         const { content } = msg.data as { content: string };
         try {

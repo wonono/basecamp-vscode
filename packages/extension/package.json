@@ -2,7 +2,7 @@
   "name": "basecamp-vscode",
   "displayName": "Basecamp for VSCode",
   "description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "Wonono",
   "engines": {
     "vscode": "^1.85.0"
@@ -125,7 +125,7 @@
         },
         {
           "command": "basecamp.createTodo",
-          "when": "viewItem == basecamp-dock-todoset",
+          "when": "viewItem == basecamp-dock-todoset || viewItem == basecamp-todolist",
           "group": "inline"
         }
       ]

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { BasecampClient } from "../api/client";
-import type { TodoList, Todo, Project } from "../api/types";
+import type { TodoList, Project } from "../api/types";
 import { getTodos } from "../api/todos";
 import { completeTodo, uncompleteTodo, createTodo } from "../api/todos";
 import { getComments, postComment } from "../api/comments";
@@ -68,6 +68,12 @@ export class TodoPanel {
           title: `To-dos — ${this.todoList.name}`,
           content: text,
         });
+        break;
+      }
+      case "copyForAI": {
+        const { text } = msg.data as { text: string };
+        await vscode.env.clipboard.writeText(text);
+        vscode.window.showInformationMessage("Basecamp context copied to clipboard.");
         break;
       }
       case "toggleTodo": {
