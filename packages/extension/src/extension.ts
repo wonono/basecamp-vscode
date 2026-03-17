@@ -132,6 +132,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           project,
           client,
           pollingService,
+          badgeService,
           context.extensionUri
         );
       }

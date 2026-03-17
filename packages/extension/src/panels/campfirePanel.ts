@@ -3,6 +3,7 @@ import type { BasecampClient } from "../api/client";
 import type { Campfire, CampfireLine, Project } from "../api/types";
 import { getLinesWithEtag, postLine } from "../api/campfires";
 import { PollingService } from "../services/poller";
+import type { BadgeService } from "../services/badge";
 import { createWebviewPanel, getWebviewHtml } from "../views/webviewProvider";
 
 const openPanels = new Map<string, CampfirePanel>();
@@ -11,12 +12,14 @@ export class CampfirePanel {
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
   private lastLineIds = new Set<number>();
+  private readonly badgeKey: string;
 
   static show(
     campfire: Campfire,
     project: Project,
     client: BasecampClient,
     poller: PollingService,
+    badgeService: BadgeService,
     extensionUri: vscode.Uri
   ): CampfirePanel {
     const key = `campfire-${campfire.id}`;
@@ -30,6 +33,7 @@ export class CampfirePanel {
       project,
       client,
       poller,
+      badgeService,
       extensionUri
     );
     openPanels.set(key, instance);
@@ -41,8 +45,11 @@ export class CampfirePanel {
     private readonly project: Project,
     private readonly client: BasecampClient,
     private readonly poller: PollingService,
+    private readonly badge: BadgeService,
     extensionUri: vscode.Uri
   ) {
+    this.badgeKey = `campfire-${campfire.id}`;
+
     this.panel = createWebviewPanel({
       viewType: "basecampCampfire",
       title: `Campfire — ${project.name}`,
@@ -63,6 +70,17 @@ export class CampfirePanel {
     );
 
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+
+    // Reset badge when panel becomes visible
+    this.panel.onDidChangeViewState(
+      () => {
+        if (this.panel.visible) {
+          this.badge.reset(this.badgeKey);
+        }
+      },
+      null,
+      this.disposables
+    );
 
     // Start polling for new lines
     const pollKey = `campfire-lines-${campfire.id}`;
@@ -150,8 +168,10 @@ export class CampfirePanel {
       }
       this.panel.webview.postMessage({ type: "newLines", data: { lines: newLines } });
 
-      // Desktop notification when panel is not visible
+      // Badge + notification when panel is not visible
       if (!this.panel.visible) {
+        this.badge.increment(this.badgeKey, newLines.length);
+
         const names = [...new Set(newLines.map((l) => l.creator.name))];
         const label = newLines.length === 1
           ? `${names[0]} in ${this.project.name}`
@@ -166,8 +186,8 @@ export class CampfirePanel {
   }
 
   private dispose(): void {
-    const key = `campfire-${this.campfire.id}`;
-    openPanels.delete(key);
+    this.badge.reset(this.badgeKey);
+    openPanels.delete(`campfire-${this.campfire.id}`);
     this.disposables.forEach((d) => d.dispose());
   }
 }
