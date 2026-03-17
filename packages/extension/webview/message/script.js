@@ -57,7 +57,7 @@
       "  </div>" +
       "</div>" +
       '  <button class="open-editor-btn" id="open-editor-btn" title="Open in Editor (Option+K)">Open in Editor</button>' +
-      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Copy context for AI">Copy for AI</button>' +
+      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Add to Claude Code (⌥R)">Add to Claude</button>' +
       "</div>" +
       '<div class="message-body">' + message.content + "</div>";
 
@@ -108,36 +108,43 @@
     }
 
     var copyAiBtn = document.getElementById("copy-ai-btn");
-    if (copyAiBtn) {
-      copyAiBtn.addEventListener("click", function () {
-        var date = new Date(message.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-        var body = threadContainer.querySelector(".message-body");
-        var bodyText = body ? body.textContent.trim() : "";
-        var lines = [
-          "## Basecamp Message: \"" + message.subject + "\"",
-          "**Author:** " + message.creator.name,
-          "**Date:** " + date,
-          "",
-          "### Content",
-          bodyText,
-        ];
-        var commentEls = threadContainer.querySelectorAll(".comment");
-        if (commentEls.length > 0) {
-          lines.push("", "### Comments");
-          for (var c = 0; c < commentEls.length; c++) {
-            var authorEl = commentEls[c].querySelector(".comment-author");
-            var dateEl = commentEls[c].querySelector(".comment-date");
-            var cbodyEl = commentEls[c].querySelector(".comment-body");
-            lines.push(
-              "",
-              "**" + (authorEl ? authorEl.textContent : "") + "** (" + (dateEl ? dateEl.textContent : "") + ")",
-              (cbodyEl ? cbodyEl.textContent.trim() : "")
-            );
-          }
+    function triggerCopyForAI() {
+      var date = new Date(message.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+      var body = threadContainer.querySelector(".message-body");
+      var bodyText = body ? body.textContent.trim() : "";
+      var lines = [
+        "## Basecamp Message: \"" + message.subject + "\"",
+        "**Author:** " + message.creator.name,
+        "**Date:** " + date,
+        "",
+        "### Content",
+        bodyText,
+      ];
+      var commentEls = threadContainer.querySelectorAll(".comment");
+      if (commentEls.length > 0) {
+        lines.push("", "### Comments");
+        for (var c = 0; c < commentEls.length; c++) {
+          var authorEl = commentEls[c].querySelector(".comment-author");
+          var dateEl = commentEls[c].querySelector(".comment-date");
+          var cbodyEl = commentEls[c].querySelector(".comment-body");
+          lines.push(
+            "",
+            "**" + (authorEl ? authorEl.textContent : "") + "** (" + (dateEl ? dateEl.textContent : "") + ")",
+            (cbodyEl ? cbodyEl.textContent.trim() : "")
+          );
         }
-        window._postMessage("copyForAI", { text: lines.join("\n") });
-      });
+      }
+      window._postMessage("copyForAI", { text: lines.join("\n") });
     }
+    if (copyAiBtn) {
+      copyAiBtn.addEventListener("click", triggerCopyForAI);
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        triggerCopyForAI();
+      }
+    });
   }
 
   function createCommentHtml(comment) {

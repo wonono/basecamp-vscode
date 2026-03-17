@@ -124,7 +124,7 @@
       "  <h1>" + escapeHtml(data.listName) + "</h1>" +
       '  <div class="todo-ratio">' + escapeHtml(data.completedRatio) + " completed</div>" +
       '  <button class="open-editor-btn" id="open-editor-btn" title="Open in Editor (Option+K)">Open in Editor</button>' +
-      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Copy context for AI">Copy for AI</button>' +
+      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Add to Claude Code (⌥R)">Add to Claude</button>' +
       "</div>";
 
     // Add todo form
@@ -220,34 +220,41 @@
 
     // Bind copy for AI
     var copyAiBtn = document.getElementById("copy-ai-btn");
-    if (copyAiBtn) {
-      copyAiBtn.addEventListener("click", function () {
-        var lines = [
-          "## Basecamp To-do List: \"" + data.listName + "\"",
-          "**Progress:** " + data.completedRatio,
-        ];
-        if (data.todos.length > 0) {
-          lines.push("", "### Active");
-          for (var t = 0; t < data.todos.length; t++) {
-            var todo = data.todos[t];
-            var line = "- [ ] " + todo.content;
-            if (todo.assignees && todo.assignees.length > 0) {
-              line += "  (Assignees: " + todo.assignees.map(function (a) { return a.name; }).join(", ") + ")";
-            }
-            if (todo.due_on) line += "  (Due: " + todo.due_on + ")";
-            lines.push(line);
-            if (todo.description) lines.push("  Notes: " + todo.description.replace(/<[^>]+>/g, "").trim());
+    function triggerCopyForAI() {
+      var lines = [
+        "## Basecamp To-do List: \"" + data.listName + "\"",
+        "**Progress:** " + data.completedRatio,
+      ];
+      if (data.todos.length > 0) {
+        lines.push("", "### Active");
+        for (var t = 0; t < data.todos.length; t++) {
+          var todo = data.todos[t];
+          var line = "- [ ] " + todo.content;
+          if (todo.assignees && todo.assignees.length > 0) {
+            line += "  (Assignees: " + todo.assignees.map(function (a) { return a.name; }).join(", ") + ")";
           }
+          if (todo.due_on) line += "  (Due: " + todo.due_on + ")";
+          lines.push(line);
+          if (todo.description) lines.push("  Notes: " + todo.description.replace(/<[^>]+>/g, "").trim());
         }
-        if (data.completedTodos.length > 0) {
-          lines.push("", "### Completed");
-          for (var c = 0; c < data.completedTodos.length; c++) {
-            lines.push("- [x] " + data.completedTodos[c].content);
-          }
+      }
+      if (data.completedTodos.length > 0) {
+        lines.push("", "### Completed");
+        for (var c = 0; c < data.completedTodos.length; c++) {
+          lines.push("- [x] " + data.completedTodos[c].content);
         }
-        window._postMessage("copyForAI", { text: lines.join("\n") });
-      });
+      }
+      window._postMessage("copyForAI", { text: lines.join("\n") });
     }
+    if (copyAiBtn) {
+      copyAiBtn.addEventListener("click", triggerCopyForAI);
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.altKey && e.key === "r") {
+        e.preventDefault();
+        triggerCopyForAI();
+      }
+    });
 
     // Bind completed toggle
     var toggleBtn = document.getElementById("toggle-completed");
