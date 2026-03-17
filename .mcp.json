@@ -4,8 +4,8 @@
       "command": "node",
       "args": ["./packages/mcp-server/build/index.js"],
       "env": {
-        "BASECAMP_ACCESS_TOKEN": "${BASECAMP_ACCESS_TOKEN}",
-        "BASECAMP_ACCOUNT_ID": "${BASECAMP_ACCOUNT_ID}"
+        "BASECAMP_ACCESS_TOKEN": "BAhbB0kiAbB7ImNsaWVudF9pZCI6ImJlYWEzNjM0Mzk1YTkyMmNjMWU4YTdmYTI5MGExMmM3MjE3MWU0NzkiLCJleHBpcmVzX2F0IjoiMjAyNi0wMy0zMVQxMjo1NzozOVoiLCJ1c2VyX2lkcyI6WzMzNTc0NjcxXSwidmVyc2lvbiI6MSwiYXBpX2RlYWRib2x0IjoiYzRjODk5MzlhNWQ2MTc4NzJmYjgzNWE1NzdhYTA5NDIifQY6BkVUSXU6CVRpbWUN7IsfwN1eeOYJOg1uYW5vX251bWkCLAE6DW5hbm9fZGVuaQY6DXN1Ym1pY3JvIgYwOgl6b25lSSIIVVRDBjsARg==--6132261319cb9bf4ff7d8536fa26fe5fcab9d48d",
+        "BASECAMP_ACCOUNT_ID": "3797456"
       }
     }
   }

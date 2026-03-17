@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import type { BasecampClient } from "../api/client";
 import type { TodoList, Todo, Project } from "../api/types";
 import { getTodos } from "../api/todos";
-import { completeTodo, uncompleteTodo } from "../api/todos";
+import { completeTodo, uncompleteTodo, createTodo } from "../api/todos";
 import { createWebviewPanel, getWebviewHtml } from "../views/webviewProvider";
 
 const openPanels = new Map<string, TodoPanel>();
@@ -81,6 +81,33 @@ export class TodoPanel {
             data: {
               message: `Failed to update to-do: ${(err as Error).message}`,
               todoId,
+            },
+          });
+        }
+        break;
+      }
+      case "createTodo": {
+        const { content, description } = msg.data as {
+          content: string;
+          description?: string;
+        };
+        try {
+          const todo = await createTodo(
+            this.client,
+            this.project.id,
+            this.todoList.id,
+            content,
+            description
+          );
+          this.panel.webview.postMessage({
+            type: "todoCreated",
+            data: { todo },
+          });
+        } catch (err) {
+          this.panel.webview.postMessage({
+            type: "error",
+            data: {
+              message: `Failed to create to-do: ${(err as Error).message}`,
             },
           });
         }

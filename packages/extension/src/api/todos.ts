@@ -32,3 +32,22 @@ export async function uncompleteTodo(
 ): Promise<void> {
   await client.delete(`/buckets/${projectId}/todos/${todoId}/completion.json`);
 }
+
+export async function createTodo(
+  client: BasecampClient,
+  projectId: number,
+  todoListId: number,
+  content: string,
+  description?: string,
+  assigneeIds?: number[],
+  dueOn?: string
+): Promise<Todo> {
+  const body: Record<string, unknown> = { content };
+  if (description) body.description = description;
+  if (assigneeIds && assigneeIds.length > 0) body.assignee_ids = assigneeIds;
+  if (dueOn) body.due_on = dueOn;
+  return client.post<Todo>(
+    `/buckets/${projectId}/todolists/${todoListId}/todos.json`,
+    body
+  );
+}

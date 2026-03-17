@@ -84,7 +84,10 @@ export function register(server: McpServer, client: BasecampClient): void {
               ? ` — assigned to: ${t.assignees.map((a) => a.name).join(", ")}`
               : "";
           const due = t.due_on ? ` (due: ${t.due_on})` : "";
-          return `- ${check} ${t.content} (ID: ${t.id})${assignees}${due}`;
+          const notes = t.description
+            ? `\n  Notes: ${t.description.replace(/<[^>]*>/g, "").trim()}`
+            : "";
+          return `- ${check} ${t.content} (ID: ${t.id})${assignees}${due}${notes}`;
         });
 
         const text = `# To-dos (${todos.length})\n\n${lines.join("\n")}`;

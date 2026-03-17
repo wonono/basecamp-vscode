@@ -1,13 +1,33 @@
 import * as vscode from "vscode";
 import type { Project, DockItem, Campfire, Message, TodoList } from "../api/types";
 
+export class CategoryItem extends vscode.TreeItem {
+  constructor(
+    public readonly category: "pinned" | "projects",
+    public readonly projects: Project[],
+    hasPinned: boolean
+  ) {
+    super(
+      category === "pinned" ? "Pinned" : "Projects",
+      category === "pinned"
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : hasPinned
+          ? vscode.TreeItemCollapsibleState.Collapsed
+          : vscode.TreeItemCollapsibleState.Expanded
+    );
+    this.id = `category-${category}`;
+    this.iconPath = new vscode.ThemeIcon(category === "pinned" ? "pinned" : "project");
+    this.contextValue = "basecamp-category";
+  }
+}
+
 export class ProjectItem extends vscode.TreeItem {
   constructor(public readonly project: Project) {
     super(project.name, vscode.TreeItemCollapsibleState.Collapsed);
     this.id = `project-${project.id}`;
     this.description = project.description || undefined;
     this.tooltip = `${project.name}\n${project.description || ""}`;
-    this.iconPath = new vscode.ThemeIcon("project");
+    this.iconPath = new vscode.ThemeIcon(project.bookmarked ? "pinned" : "project");
     this.contextValue = "basecamp-project";
   }
 }

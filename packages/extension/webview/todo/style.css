@@ -33,6 +33,81 @@
   font-size: 0.9em;
 }
 
+/* Add todo form */
+.add-todo-form {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.2));
+}
+
+.add-todo-row {
+  display: flex;
+  gap: 8px;
+}
+
+.add-todo-row input[type="text"] {
+  flex: 1;
+  padding: 6px 10px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, rgba(128, 128, 128, 0.3));
+  border-radius: 4px;
+  font-size: 0.95em;
+  outline: none;
+}
+
+.add-todo-row input[type="text"]:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.add-todo-row button {
+  padding: 6px 14px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.add-todo-row button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.toggle-desc-btn {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.8em;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 4px;
+}
+
+.toggle-desc-btn:hover {
+  color: var(--vscode-textLink-foreground);
+}
+
+.add-todo-form textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, rgba(128, 128, 128, 0.3));
+  border-radius: 4px;
+  font-size: 0.85em;
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.add-todo-form textarea:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
 /* Section headers */
 .section-header {
   font-size: 0.85em;
@@ -76,6 +151,17 @@
 .todo-item.completed .todo-text {
   text-decoration: line-through;
   opacity: 0.6;
+}
+
+.todo-notes {
+  margin-top: 4px;
+  padding: 6px 8px;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.1));
+  border-left: 3px solid var(--vscode-textBlockQuote-border, rgba(128, 128, 128, 0.3));
+  border-radius: 2px;
+  line-height: 1.4;
 }
 
 .todo-details {

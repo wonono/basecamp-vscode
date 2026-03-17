@@ -4,6 +4,7 @@ import type { AuthManager } from "../auth";
 import type { Campfire, Message, TodoList, DockItem } from "../api/types";
 import { getProjects } from "../api/projects";
 import {
+  CategoryItem,
   ProjectItem,
   DockToolItem,
   CampfireItem,
@@ -11,7 +12,7 @@ import {
   TodoListItem,
 } from "./treeItems";
 
-type TreeNode = ProjectItem | DockToolItem | CampfireItem | MessageItem | TodoListItem;
+type TreeNode = CategoryItem | ProjectItem | DockToolItem | CampfireItem | MessageItem | TodoListItem;
 
 export class ProjectTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | undefined | void>();
@@ -36,12 +37,23 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     try {
-      // Root: list projects
+      // Root: list categories
       if (!element) {
         const projects = await getProjects(this.client);
-        return projects
-          .filter((p) => p.status === "active")
-          .map((p) => new ProjectItem(p));
+        const active = projects.filter((p) => p.status === "active");
+        const pinned = active.filter((p) => p.bookmarked);
+        const hasPinned = pinned.length > 0;
+        const nodes: TreeNode[] = [];
+        if (hasPinned) {
+          nodes.push(new CategoryItem("pinned", pinned, true));
+        }
+        nodes.push(new CategoryItem("projects", active, hasPinned));
+        return nodes;
+      }
+
+      // Category: list projects in that category
+      if (element instanceof CategoryItem) {
+        return element.projects.map((p) => new ProjectItem(p));
       }
 
       // Project: list enabled dock items
