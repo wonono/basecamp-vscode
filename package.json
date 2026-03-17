@@ -1,0 +1,7 @@
+{
+  "name": "basecamp-vscode-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

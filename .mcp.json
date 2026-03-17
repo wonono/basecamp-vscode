@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "basecamp": {
+      "command": "node",
+      "args": ["./packages/mcp-server/build/index.js"],
+      "env": {
+        "BASECAMP_ACCESS_TOKEN": "${BASECAMP_ACCESS_TOKEN}",
+        "BASECAMP_ACCOUNT_ID": "${BASECAMP_ACCOUNT_ID}"
+      }
+    }
+  }
+}
