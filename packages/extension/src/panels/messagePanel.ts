@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 import type { BasecampClient } from "../api/client";
+import { addToAIContext } from "../utils/aiContext";
 import type { Message, Comment, Project } from "../api/types";
 import { getMessage } from "../api/messages";
 import { getComments, postComment } from "../api/comments";
@@ -76,10 +74,7 @@ export class MessagePanel {
       }
       case "copyForAI": {
         const { text } = msg.data as { text: string };
-        const refPath = path.join(os.tmpdir(), "basecamp-reference.md");
-        fs.writeFileSync(refPath, text, "utf8");
-        await vscode.env.clipboard.writeText(`@${refPath}`);
-        vscode.window.showInformationMessage(`Context saved — paste in Claude with ⌘V`);
+        await addToAIContext(text);
         break;
       }
       case "postComment": {

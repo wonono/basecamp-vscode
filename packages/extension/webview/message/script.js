@@ -57,7 +57,7 @@
       "  </div>" +
       "</div>" +
       '  <button class="open-editor-btn" id="open-editor-btn" title="Open in Editor (Option+K)">Open in Editor</button>' +
-      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Add to Claude Code (⌥R)">Add to Claude</button>' +
+      '  <button class="copy-ai-btn" id="copy-ai-btn" title="Add to AI context (⌥R)">Add to AI</button>' +
       "</div>" +
       '<div class="message-body">' + message.content + "</div>";
 

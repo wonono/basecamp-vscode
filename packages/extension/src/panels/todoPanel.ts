@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 import type { BasecampClient } from "../api/client";
+import { addToAIContext } from "../utils/aiContext";
 import type { TodoList, Project } from "../api/types";
 import { getTodos } from "../api/todos";
 import { completeTodo, uncompleteTodo, createTodo } from "../api/todos";
@@ -75,10 +73,7 @@ export class TodoPanel {
       }
       case "copyForAI": {
         const { text } = msg.data as { text: string };
-        const refPath = path.join(os.tmpdir(), "basecamp-reference.md");
-        fs.writeFileSync(refPath, text, "utf8");
-        await vscode.env.clipboard.writeText(`@${refPath}`);
-        vscode.window.showInformationMessage(`Context saved — paste in Claude with ⌘V`);
+        await addToAIContext(text);
         break;
       }
       case "toggleTodo": {
