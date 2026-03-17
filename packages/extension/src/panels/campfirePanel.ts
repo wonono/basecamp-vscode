@@ -149,6 +149,19 @@ export class CampfirePanel {
         this.lastLineIds = new Set(ids.slice(ids.length - 300));
       }
       this.panel.webview.postMessage({ type: "newLines", data: { lines: newLines } });
+
+      // Desktop notification when panel is not visible
+      if (!this.panel.visible) {
+        const names = [...new Set(newLines.map((l) => l.creator.name))];
+        const label = newLines.length === 1
+          ? `${names[0]} in ${this.project.name}`
+          : `${newLines.length} new messages in ${this.project.name}`;
+        vscode.window.showInformationMessage(`Campfire: ${label}`, "Open").then((action) => {
+          if (action === "Open") {
+            this.panel.reveal();
+          }
+        });
+      }
     }
   }
 

@@ -2,6 +2,7 @@
 (function () {
   var todoPanel;
   var showCompleted = false;
+  var peopleList = [];
 
   function init() {
     var app = document.getElementById("app");
@@ -12,12 +13,11 @@
       renderTodos(data);
     });
 
-    window._onMessage("todoUpdated", function (data) {
+    window._onMessage("todoUpdated", function () {
       // Already optimistically updated — just confirm
     });
 
     window._onMessage("todoCreated", function (data) {
-      // Insert the new todo at the top of the active list
       var activeSection = todoPanel.querySelector(".section-header");
       if (activeSection && activeSection.textContent.indexOf("All done") !== -1) {
         activeSection.textContent = "Active";
@@ -26,23 +26,85 @@
       var div = document.createElement("div");
       div.innerHTML = html;
       var newItem = div.firstElementChild;
-      // Insert after the "Active" section header
       var firstTodo = todoPanel.querySelector(".todo-item");
       if (firstTodo) {
         firstTodo.parentNode.insertBefore(newItem, firstTodo);
       } else if (activeSection) {
         activeSection.insertAdjacentElement("afterend", newItem);
       }
-      // Bind checkbox
-      var cb = newItem.querySelector('input[type="checkbox"]');
-      if (cb) cb.addEventListener("change", onCheckboxChange);
+      bindTodoItem(newItem);
       // Clear form
       var input = document.getElementById("new-todo-input");
       var desc = document.getElementById("new-todo-desc");
+      var dueInput = document.getElementById("new-todo-due");
       if (input) input.value = "";
       if (desc) { desc.value = ""; desc.style.display = "none"; }
+      if (dueInput) dueInput.value = "";
       var toggle = document.getElementById("toggle-desc");
       if (toggle) toggle.textContent = "+ Add notes";
+      var assignee = document.getElementById("new-todo-assignee");
+      if (assignee) assignee.value = "";
+    });
+
+    window._onMessage("people", function (data) {
+      peopleList = data.people;
+      var select = document.getElementById("new-todo-assignee");
+      if (select && peopleList.length > 0) {
+        var opts = '<option value="">No assignee</option>';
+        for (var p = 0; p < peopleList.length; p++) {
+          opts += '<option value="' + peopleList[p].id + '">' + escapeHtml(peopleList[p].name) + '</option>';
+        }
+        select.innerHTML = opts;
+        select.style.display = "block";
+      }
+    });
+
+    window._onMessage("comments", function (data) {
+      var container = document.getElementById("comments-" + data.todoId);
+      if (!container) return;
+      var html = "";
+      for (var i = 0; i < data.comments.length; i++) {
+        var c = data.comments[i];
+        var date = new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        html += '<div class="todo-comment">' +
+          '<span class="todo-comment-author">' + escapeHtml(c.creator.name) + '</span>' +
+          '<span class="todo-comment-date">' + date + '</span>' +
+          '<div class="todo-comment-body">' + c.content + '</div>' +
+          '</div>';
+      }
+      html += '<div class="todo-comment-form">' +
+        '<input type="text" class="todo-comment-input" placeholder="Add a comment..." data-todo-id="' + data.todoId + '" />' +
+        '</div>';
+      container.innerHTML = html;
+      container.style.display = "block";
+      // Bind comment input
+      var commentInput = container.querySelector(".todo-comment-input");
+      if (commentInput) {
+        commentInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            var val = commentInput.value.trim();
+            if (!val) return;
+            window._postMessage("postTodoComment", { todoId: data.todoId, content: val });
+            commentInput.value = "";
+          }
+        });
+      }
+    });
+
+    window._onMessage("commentPosted", function (data) {
+      var container = document.getElementById("comments-" + data.todoId);
+      if (!container) return;
+      var c = data.comment;
+      var date = new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      var html = '<div class="todo-comment">' +
+        '<span class="todo-comment-author">' + escapeHtml(c.creator.name) + '</span>' +
+        '<span class="todo-comment-date">' + date + '</span>' +
+        '<div class="todo-comment-body">' + c.content + '</div>' +
+        '</div>';
+      var form = container.querySelector(".todo-comment-form");
+      if (form) {
+        form.insertAdjacentHTML("beforebegin", html);
+      }
     });
 
     window._onMessage("error", function (data) {
@@ -53,6 +115,7 @@
     });
 
     window._postMessage("ready");
+    window._postMessage("loadPeople");
   }
 
   function renderTodos(data) {
@@ -69,7 +132,11 @@
       '    <input type="text" id="new-todo-input" placeholder="Add a to-do..." />' +
       '    <button id="add-todo-btn">Add</button>' +
       '  </div>' +
-      '  <button class="toggle-desc-btn" id="toggle-desc">+ Add notes</button>' +
+      '  <div class="add-todo-options">' +
+      '    <button class="toggle-desc-btn" id="toggle-desc">+ Add notes</button>' +
+      '    <select id="new-todo-assignee" style="display:none"></select>' +
+      '    <input type="date" id="new-todo-due" title="Due date" />' +
+      '  </div>' +
       '  <textarea id="new-todo-desc" placeholder="Notes (optional)" style="display:none"></textarea>' +
       '</div>';
 
@@ -80,7 +147,7 @@
         html += createTodoHtml(data.todos[i]);
       }
     } else {
-      html += '<div class="section-header">All done! 🎉</div>';
+      html += '<div class="section-header">All done!</div>';
     }
 
     // Completed todos
@@ -101,10 +168,10 @@
 
     todoPanel.innerHTML = html;
 
-    // Bind checkbox events
-    var checkboxes = todoPanel.querySelectorAll('input[type="checkbox"]');
-    for (var k = 0; k < checkboxes.length; k++) {
-      checkboxes[k].addEventListener("change", onCheckboxChange);
+    // Bind all todo items
+    var items = todoPanel.querySelectorAll(".todo-item");
+    for (var k = 0; k < items.length; k++) {
+      bindTodoItem(items[k]);
     }
 
     // Bind add todo form
@@ -147,6 +214,44 @@
           : "Show " + data.completedTodos.length + " completed item(s)";
       });
     }
+
+    // Re-populate assignee picker if people already loaded
+    if (peopleList.length > 0) {
+      var select = document.getElementById("new-todo-assignee");
+      if (select) {
+        var opts = '<option value="">No assignee</option>';
+        for (var p = 0; p < peopleList.length; p++) {
+          opts += '<option value="' + peopleList[p].id + '">' + escapeHtml(peopleList[p].name) + '</option>';
+        }
+        select.innerHTML = opts;
+        select.style.display = "block";
+      }
+    }
+  }
+
+  function bindTodoItem(item) {
+    var cb = item.querySelector('input[type="checkbox"]');
+    if (cb) cb.addEventListener("change", onCheckboxChange);
+    // Click on todo text to toggle comments
+    var textEl = item.querySelector(".todo-text");
+    if (textEl) {
+      textEl.style.cursor = "pointer";
+      textEl.addEventListener("click", function () {
+        var todoId = parseInt(item.getAttribute("data-id"), 10);
+        var commentsUrl = item.getAttribute("data-comments-url");
+        var container = document.getElementById("comments-" + todoId);
+        if (!container) return;
+        if (container.style.display === "block") {
+          container.style.display = "none";
+          return;
+        }
+        if (commentsUrl) {
+          container.innerHTML = '<div class="loading-sm">Loading comments...</div>';
+          container.style.display = "block";
+          window._postMessage("loadComments", { todoId: todoId, commentsUrl: commentsUrl });
+        }
+      });
+    }
   }
 
   function createTodoHtml(todo) {
@@ -165,6 +270,10 @@
       details.push('<span class="' + dueClass + '">📅 ' + todo.due_on + "</span>");
     }
 
+    if (todo.comments_count > 0) {
+      details.push('<span class="todo-comments-count">💬 ' + todo.comments_count + "</span>");
+    }
+
     var detailsHtml = details.length > 0
       ? '<div class="todo-details">' + details.join("") + "</div>"
       : "";
@@ -173,13 +282,16 @@
       ? '<div class="todo-notes">' + todo.description + "</div>"
       : "";
 
+    var commentsUrl = todo.comments_url ? todo.comments_url : "";
+
     return (
-      '<div class="todo-item' + completedClass + '" data-id="' + todo.id + '">' +
+      '<div class="todo-item' + completedClass + '" data-id="' + todo.id + '" data-comments-url="' + escapeHtml(commentsUrl) + '">' +
       '  <input type="checkbox"' + checked + ' data-id="' + todo.id + '">' +
       '  <div class="todo-content">' +
       '    <div class="todo-text">' + escapeHtml(todo.content) + "</div>" +
       notesHtml +
       detailsHtml +
+      '    <div class="todo-comments-section" id="comments-' + todo.id + '" style="display:none"></div>' +
       "  </div>" +
       "</div>"
     );
@@ -189,7 +301,19 @@
     var content = input.value.trim();
     if (!content) return;
     var description = descInput && descInput.value.trim() ? descInput.value.trim() : undefined;
-    window._postMessage("createTodo", { content: content, description: description });
+    var assigneeSelect = document.getElementById("new-todo-assignee");
+    var assigneeIds = [];
+    if (assigneeSelect && assigneeSelect.value) {
+      assigneeIds.push(parseInt(assigneeSelect.value, 10));
+    }
+    var dueInput = document.getElementById("new-todo-due");
+    var dueOn = dueInput && dueInput.value ? dueInput.value : undefined;
+    window._postMessage("createTodo", {
+      content: content,
+      description: description,
+      assigneeIds: assigneeIds.length > 0 ? assigneeIds : undefined,
+      dueOn: dueOn,
+    });
   }
 
   function onCheckboxChange(e) {
@@ -197,7 +321,6 @@
     var todoId = parseInt(checkbox.getAttribute("data-id"), 10);
     var completed = checkbox.checked;
 
-    // Optimistic UI update
     var item = checkbox.closest(".todo-item");
     if (item) {
       if (completed) {
@@ -222,6 +345,7 @@
   }
 
   function escapeHtml(text) {
+    if (!text) return "";
     var div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;

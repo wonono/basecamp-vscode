@@ -3,6 +3,8 @@ import type { BasecampClient } from "../api/client";
 import type { TodoList, Todo, Project } from "../api/types";
 import { getTodos } from "../api/todos";
 import { completeTodo, uncompleteTodo, createTodo } from "../api/todos";
+import { getComments, postComment } from "../api/comments";
+import { getPeople } from "../api/people";
 import { createWebviewPanel, getWebviewHtml } from "../views/webviewProvider";
 
 const openPanels = new Map<string, TodoPanel>();
@@ -86,10 +88,24 @@ export class TodoPanel {
         }
         break;
       }
+      case "loadPeople": {
+        try {
+          const people = await getPeople(this.client);
+          this.panel.webview.postMessage({
+            type: "people",
+            data: { people: people.map((p) => ({ id: p.id, name: p.name })) },
+          });
+        } catch {
+          // silently ignore — assignee picker just won't populate
+        }
+        break;
+      }
       case "createTodo": {
-        const { content, description } = msg.data as {
+        const { content, description, assigneeIds, dueOn } = msg.data as {
           content: string;
           description?: string;
+          assigneeIds?: number[];
+          dueOn?: string;
         };
         try {
           const todo = await createTodo(
@@ -97,7 +113,9 @@ export class TodoPanel {
             this.project.id,
             this.todoList.id,
             content,
-            description
+            description,
+            assigneeIds,
+            dueOn
           );
           this.panel.webview.postMessage({
             type: "todoCreated",
@@ -108,6 +126,48 @@ export class TodoPanel {
             type: "error",
             data: {
               message: `Failed to create to-do: ${(err as Error).message}`,
+            },
+          });
+        }
+        break;
+      }
+      case "loadComments": {
+        const { todoId, commentsUrl } = msg.data as {
+          todoId: number;
+          commentsUrl: string;
+        };
+        try {
+          const comments = await getComments(this.client, commentsUrl);
+          this.panel.webview.postMessage({
+            type: "comments",
+            data: { todoId, comments },
+          });
+        } catch {
+          // silently ignore
+        }
+        break;
+      }
+      case "postTodoComment": {
+        const { todoId: tid, content: commentContent } = msg.data as {
+          todoId: number;
+          content: string;
+        };
+        try {
+          const comment = await postComment(
+            this.client,
+            this.project.id,
+            tid,
+            commentContent
+          );
+          this.panel.webview.postMessage({
+            type: "commentPosted",
+            data: { todoId: tid, comment },
+          });
+        } catch (err) {
+          this.panel.webview.postMessage({
+            type: "error",
+            data: {
+              message: `Failed to post comment: ${(err as Error).message}`,
             },
           });
         }

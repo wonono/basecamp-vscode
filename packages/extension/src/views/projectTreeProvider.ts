@@ -59,10 +59,25 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       // Project: list enabled dock items
       if (element instanceof ProjectItem) {
         const supportedDocks = ["chat", "message_board", "todoset"];
-        return element.project.dock
+        const docks = element.project.dock
           .filter((d) => d.enabled && supportedDocks.includes(d.name))
-          .sort((a, b) => (a.position ?? 99) - (b.position ?? 99))
-          .map((d) => new DockToolItem(d, element.project));
+          .sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
+
+        const nodes: TreeNode[] = [];
+        for (const d of docks) {
+          if (d.name === "chat") {
+            // Chat has a single child — show it directly as a clickable item
+            try {
+              const campfire = await this.client.get<Campfire>(d.url);
+              nodes.push(new CampfireItem(campfire, element.project));
+            } catch {
+              // skip if chat fails to load
+            }
+          } else {
+            nodes.push(new DockToolItem(d, element.project));
+          }
+        }
+        return nodes;
       }
 
       // Dock tool: list items based on dock type

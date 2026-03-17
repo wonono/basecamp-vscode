@@ -2,7 +2,7 @@
   "name": "basecamp-vscode",
   "displayName": "Basecamp for VSCode",
   "description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "Wonono",
   "engines": {
     "vscode": "^1.85.0"
@@ -45,7 +45,8 @@
       {
         "command": "basecamp.signOut",
         "title": "Sign Out",
-        "category": "Basecamp"
+        "category": "Basecamp",
+        "icon": "$(sign-out)"
       },
       {
         "command": "basecamp.refresh",
@@ -67,6 +68,30 @@
         "command": "basecamp.openTodoList",
         "title": "Open To-do List",
         "category": "Basecamp"
+      },
+      {
+        "command": "basecamp.openInBrowser",
+        "title": "Open in Basecamp",
+        "category": "Basecamp",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "basecamp.search",
+        "title": "Search",
+        "category": "Basecamp",
+        "icon": "$(search)"
+      },
+      {
+        "command": "basecamp.createMessage",
+        "title": "New Message",
+        "category": "Basecamp",
+        "icon": "$(add)"
+      },
+      {
+        "command": "basecamp.createTodo",
+        "title": "New To-do",
+        "category": "Basecamp",
+        "icon": "$(add)"
       }
     ],
     "menus": {
@@ -74,7 +99,34 @@
         {
           "command": "basecamp.refresh",
           "when": "view == basecamp-projects",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "basecamp.search",
+          "when": "view == basecamp-projects",
+          "group": "navigation@2"
+        },
+        {
+          "command": "basecamp.signOut",
+          "when": "view == basecamp-projects && basecamp.isAuthenticated",
+          "group": "overflow"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "basecamp.openInBrowser",
+          "when": "viewItem == basecamp-project || viewItem == basecamp-campfire || viewItem == basecamp-message || viewItem == basecamp-todolist",
+          "group": "inline"
+        },
+        {
+          "command": "basecamp.createMessage",
+          "when": "viewItem == basecamp-dock-message_board",
+          "group": "inline"
+        },
+        {
+          "command": "basecamp.createTodo",
+          "when": "viewItem == basecamp-dock-todoset",
+          "group": "inline"
         }
       ]
     },
@@ -82,6 +134,13 @@
       {
         "view": "basecamp-projects",
         "contents": "Connect your Basecamp account to get started.\n[Sign In](command:basecamp.signIn)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "workbench.view.extension.basecamp-explorer",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b"
       }
     ],
     "configuration": {

@@ -120,4 +120,46 @@ export function register(server: McpServer, client: BasecampClient): void {
       }
     }
   );
+
+  server.registerTool(
+    "post_message",
+    {
+      description: "Post a new message to a project's message board",
+      inputSchema: {
+        projectId: z.number().describe("Basecamp project ID"),
+        subject: z.string().describe("Message subject/title"),
+        content: z.string().describe("Message body (HTML supported)"),
+      },
+    },
+    async ({ projectId, subject, content }) => {
+      try {
+        const boardUrl = await client.getDockUrl(projectId, "message_board");
+        const board = await client.get<MessageBoard>(boardUrl);
+
+        const message = await client.post<Message>(
+          `/buckets/${projectId}/message_boards/${board.id}/messages.json`,
+          { subject, content, status: "active" }
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Message posted: "${message.subject}" (ID: ${message.id})`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to post message: ${(error as Error).message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
 }

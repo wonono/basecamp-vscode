@@ -58,6 +58,12 @@ export class BasecampClient {
     return response.json() as Promise<T>;
   }
 
+  async put<T>(path: string, body: unknown): Promise<T> {
+    const url = this.resolveUrl(path);
+    const response = await this.request("PUT", url, body);
+    return response.json() as Promise<T>;
+  }
+
   async delete(path: string): Promise<void> {
     const url = this.resolveUrl(path);
     await this.request("DELETE", url);

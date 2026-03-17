@@ -107,6 +107,53 @@ export function register(server: McpServer, client: BasecampClient): void {
   );
 
   server.registerTool(
+    "create_todo",
+    {
+      description: "Create a new to-do in a to-do list",
+      inputSchema: {
+        projectId: z.number().describe("Basecamp project ID"),
+        todolistId: z.number().describe("To-do list ID"),
+        content: z.string().describe("To-do title"),
+        description: z.string().optional().describe("Notes/description (HTML supported)"),
+        assignee_ids: z.array(z.number()).optional().describe("Array of person IDs to assign"),
+        due_on: z.string().optional().describe("Due date in YYYY-MM-DD format"),
+      },
+    },
+    async ({ projectId, todolistId, content, description, assignee_ids, due_on }) => {
+      try {
+        const body: Record<string, unknown> = { content };
+        if (description) body.description = description;
+        if (assignee_ids && assignee_ids.length > 0) body.assignee_ids = assignee_ids;
+        if (due_on) body.due_on = due_on;
+
+        const todo = await client.post<{ id: number; content: string }>(
+          `/buckets/${projectId}/todolists/${todolistId}/todos.json`,
+          body
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `To-do created: "${todo.content}" (ID: ${todo.id})`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to create to-do: ${(error as Error).message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.registerTool(
     "complete_todo",
     {
       description: "Mark a to-do as complete",
@@ -132,6 +179,77 @@ export function register(server: McpServer, client: BasecampClient): void {
             {
               type: "text",
               text: `Failed to complete to-do: ${(error as Error).message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.registerTool(
+    "uncomplete_todo",
+    {
+      description: "Mark a completed to-do as incomplete",
+      inputSchema: {
+        projectId: z.number().describe("Basecamp project ID"),
+        todoId: z.number().describe("To-do ID"),
+      },
+    },
+    async ({ projectId, todoId }) => {
+      try {
+        await client.delete(
+          `/buckets/${projectId}/todos/${todoId}/completion.json`
+        );
+        return {
+          content: [
+            { type: "text", text: `To-do ${todoId} marked as incomplete.` },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to uncomplete to-do: ${(error as Error).message}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.registerTool(
+    "assign_todo",
+    {
+      description: "Update assignees on a to-do",
+      inputSchema: {
+        projectId: z.number().describe("Basecamp project ID"),
+        todoId: z.number().describe("To-do ID"),
+        assignee_ids: z.array(z.number()).describe("Array of person IDs to assign (empty to unassign all)"),
+      },
+    },
+    async ({ projectId, todoId, assignee_ids }) => {
+      try {
+        await client.put(
+          `/buckets/${projectId}/todos/${todoId}.json`,
+          { assignee_ids }
+        );
+        const label = assignee_ids.length > 0
+          ? `assigned to ${assignee_ids.length} person(s)`
+          : "unassigned";
+        return {
+          content: [
+            { type: "text", text: `To-do ${todoId} ${label}.` },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to assign to-do: ${(error as Error).message}`,
             },
           ],
           isError: true,
