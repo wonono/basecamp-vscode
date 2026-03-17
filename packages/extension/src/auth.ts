@@ -8,6 +8,8 @@ const TOKEN_ENDPOINT = "https://launchpad.37signals.com/authorization/token";
 const AUTH_ENDPOINT = "https://launchpad.37signals.com/authorization/new";
 const AUTH_INFO_ENDPOINT = "https://launchpad.37signals.com/authorization.json";
 const OAUTH_TIMEOUT_MS = 120_000;
+const OAUTH_PORT = 21437;
+const REDIRECT_URI = `http://localhost:${OAUTH_PORT}/callback`;
 
 export class AuthManager implements vscode.Disposable {
   private readonly secrets: vscode.SecretStorage;
@@ -187,13 +189,8 @@ export class AuthManager implements vscode.Disposable {
         res.end("<html><body><h1>Authenticated!</h1><p>You can close this window and return to VSCode.</p></body></html>");
 
         resolved = true;
-        const address = server.address();
-        const port = typeof address === "object" && address ? address.port : 0;
         cleanup();
-        resolve({
-          code,
-          redirectUri: `http://localhost:${port}/callback`,
-        });
+        resolve({ code, redirectUri: REDIRECT_URI });
       });
 
       const timeout = setTimeout(() => {
@@ -208,13 +205,24 @@ export class AuthManager implements vscode.Disposable {
         server.close();
       }
 
-      server.listen(0, () => {
-        const address = server.address();
-        const port = typeof address === "object" && address ? address.port : 0;
-        const redirectUri = `http://localhost:${port}/callback`;
+      server.on("error", (err: NodeJS.ErrnoException) => {
+        if (err.code === "EADDRINUSE") {
+          cleanup();
+          reject(
+            new Error(
+              `Port ${OAUTH_PORT} is already in use. Close the application using it and try again.`
+            )
+          );
+        } else {
+          cleanup();
+          reject(err);
+        }
+      });
+
+      server.listen(OAUTH_PORT, () => {
         const authUrl =
           `${AUTH_ENDPOINT}?type=web_server&client_id=${encodeURIComponent(clientId)}` +
-          `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+          `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
           `&state=${encodeURIComponent(state)}`;
 
         vscode.env.openExternal(vscode.Uri.parse(authUrl));

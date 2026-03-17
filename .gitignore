@@ -3,3 +3,4 @@ dist/
 build/
 *.vsix
 .DS_Store
+.vscode/settings.json
