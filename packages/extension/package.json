@@ -2,17 +2,12 @@
   "name": "basecamp-vscode",
   "displayName": "Basecamp for VSCode",
   "description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "Wonono",
   "engines": {
     "vscode": "^1.85.0"
   },
   "main": "./dist/extension.js",
-  "files": [
-    "dist",
-    "resources",
-    "webview"
-  ],
   "categories": [
     "Other"
   ],

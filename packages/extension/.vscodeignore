@@ -1,0 +1,5 @@
+**/*
+!dist/**
+!resources/**
+!webview/**
+!package.json
