@@ -10,6 +10,8 @@ const AUTH_INFO_ENDPOINT = "https://launchpad.37signals.com/authorization.json";
 const OAUTH_TIMEOUT_MS = 120_000;
 const OAUTH_PORT = 21437;
 const REDIRECT_URI = `http://localhost:${OAUTH_PORT}/callback`;
+const CLIENT_ID = "beaa3634395a922cc1e8a7fa290a12c72171e479";
+const CLIENT_SECRET = "da9af682b6a315351ee1cce2f06646a99a5795d2";
 
 export class AuthManager implements vscode.Disposable {
   private readonly secrets: vscode.SecretStorage;
@@ -51,25 +53,7 @@ export class AuthManager implements vscode.Disposable {
   }
 
   async signIn(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("basecamp");
-    const clientId = config.get<string>("clientId");
-    const clientSecret = config.get<string>("clientSecret");
-
-    if (!clientId || !clientSecret) {
-      const action = await vscode.window.showErrorMessage(
-        "Basecamp OAuth credentials not configured. Please set basecamp.clientId and basecamp.clientSecret in settings.",
-        "Open Settings"
-      );
-      if (action === "Open Settings") {
-        await vscode.commands.executeCommand(
-          "workbench.action.openSettings",
-          "basecamp.clientId"
-        );
-      }
-      return;
-    }
-
-    const { code, redirectUri } = await this.startOAuthFlow(clientId);
+    const { code, redirectUri } = await this.startOAuthFlow(CLIENT_ID);
 
     // Exchange code for tokens
     const tokenResponse = await fetch(TOKEN_ENDPOINT, {
@@ -77,8 +61,8 @@ export class AuthManager implements vscode.Disposable {
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         type: "web_server",
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
         redirect_uri: redirectUri,
         code,
       }),
@@ -252,11 +236,7 @@ export class AuthManager implements vscode.Disposable {
   }
 
   private async doRefresh(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("basecamp");
-    const clientId = config.get<string>("clientId");
-    const clientSecret = config.get<string>("clientSecret");
-
-    if (!clientId || !clientSecret || !this.cachedTokens) {
+    if (!this.cachedTokens) {
       return;
     }
 
@@ -265,8 +245,8 @@ export class AuthManager implements vscode.Disposable {
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         type: "refresh",
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
         refresh_token: this.cachedTokens.refresh_token,
       }),
     });

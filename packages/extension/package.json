@@ -8,6 +8,7 @@
     "vscode": "^1.85.0"
   },
   "main": "./dist/extension.js",
+  "extensionKind": ["ui"],
   "categories": [
     "Other"
   ],
@@ -16,17 +17,17 @@
     "url": "https://github.com/basecamp-vscode/basecamp-vscode"
   },
   "contributes": {
-    "viewContainers": {
+    "viewsContainers": {
       "activitybar": [
         {
-          "id": "basecamp-sidebar",
+          "id": "basecamp-explorer",
           "title": "Basecamp",
           "icon": "resources/basecamp-icon.svg"
         }
       ]
     },
     "views": {
-      "basecamp-sidebar": [
+      "basecamp-explorer": [
         {
           "id": "basecamp-projects",
           "name": "Projects",
@@ -85,16 +86,6 @@
     "configuration": {
       "title": "Basecamp",
       "properties": {
-        "basecamp.clientId": {
-          "type": "string",
-          "default": "",
-          "description": "OAuth Client ID from Basecamp Launchpad (https://launchpad.37signals.com/integrations)"
-        },
-        "basecamp.clientSecret": {
-          "type": "string",
-          "default": "",
-          "description": "OAuth Client Secret from Basecamp Launchpad"
-        },
         "basecamp.pollingInterval": {
           "type": "number",
           "default": 15,

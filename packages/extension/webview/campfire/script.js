@@ -80,7 +80,7 @@
       creator: { name: "You" },
       content: content,
       created_at: new Date().toISOString(),
-    });
+    }, true);
     var div = document.createElement("div");
     div.innerHTML = html;
     var el = div.firstElementChild;
@@ -124,11 +124,13 @@
     messagesContainer.appendChild(div.firstElementChild);
   }
 
-  function createMessageHtml(line) {
+  function createMessageHtml(line, raw) {
     var date = new Date(line.created_at);
     var time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     var initials = getInitials(line.creator.name);
-    var content = escapeHtml(line.content);
+    // API returns sanitized HTML — render it directly
+    // Only escape raw user input (optimistic messages before API confirmation)
+    var content = raw ? escapeHtml(line.content) : line.content;
 
     return (
       '<div class="message" data-id="' + line.id + '">' +
