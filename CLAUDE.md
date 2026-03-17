@@ -28,6 +28,15 @@ Then remind the user to **Reload Window** (Ctrl+Shift+P → "Reload Window") —
 - Redirect URI: `http://localhost:21437/callback`
 - Publisher: Wonono
 
+## Publishing to Marketplace
+
+Azure DevOps PAT doesn't work for this account. Use manual upload instead:
+
+1. Bump version in `packages/extension/package.json`
+2. Run the rebuild command above to generate a new `.vsix`
+3. Go to https://marketplace.visualstudio.com/manage
+4. Click "..." on the extension → **Update** → drag & drop the `.vsix`
+
 ## Key conventions
 
 - Extension bundled with esbuild (see `esbuild.js`)
