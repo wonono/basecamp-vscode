@@ -2,7 +2,7 @@
 	"name": "basecamp-vscode",
 	"displayName": "Basecamp for VSCode",
 	"description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"publisher": "Wonono",
 	"engines": {
 		"vscode": "^1.85.0"
