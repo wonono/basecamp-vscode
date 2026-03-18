@@ -1,169 +1,171 @@
 {
-  "name": "basecamp-vscode",
-  "displayName": "Basecamp for VSCode",
-  "description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
-  "version": "0.3.2",
-  "publisher": "Wonono",
-  "engines": {
-    "vscode": "^1.85.0"
-  },
-  "icon": "resources/icon.png",
-  "main": "./dist/extension.js",
-  "extensionKind": ["ui"],
-  "categories": [
-    "Other"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/basecamp-vscode/basecamp-vscode"
-  },
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "basecamp-explorer",
-          "title": "Basecamp",
-          "icon": "resources/basecamp-icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "basecamp-explorer": [
-        {
-          "id": "basecamp-projects",
-          "name": "Projects",
-          "type": "tree"
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "basecamp.signIn",
-        "title": "Sign In",
-        "category": "Basecamp"
-      },
-      {
-        "command": "basecamp.signOut",
-        "title": "Sign Out",
-        "category": "Basecamp",
-        "icon": "$(sign-out)"
-      },
-      {
-        "command": "basecamp.refresh",
-        "title": "Refresh",
-        "category": "Basecamp",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "basecamp.openCampfire",
-        "title": "Open Campfire",
-        "category": "Basecamp"
-      },
-      {
-        "command": "basecamp.openMessage",
-        "title": "Open Message",
-        "category": "Basecamp"
-      },
-      {
-        "command": "basecamp.openTodoList",
-        "title": "Open To-do List",
-        "category": "Basecamp"
-      },
-      {
-        "command": "basecamp.openInBrowser",
-        "title": "Open in Basecamp",
-        "category": "Basecamp",
-        "icon": "$(link-external)"
-      },
-      {
-        "command": "basecamp.search",
-        "title": "Search",
-        "category": "Basecamp",
-        "icon": "$(search)"
-      },
-      {
-        "command": "basecamp.createMessage",
-        "title": "New Message",
-        "category": "Basecamp",
-        "icon": "$(add)"
-      },
-      {
-        "command": "basecamp.createTodo",
-        "title": "New To-do",
-        "category": "Basecamp",
-        "icon": "$(add)"
-      }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "basecamp.refresh",
-          "when": "view == basecamp-projects",
-          "group": "navigation@1"
-        },
-        {
-          "command": "basecamp.search",
-          "when": "view == basecamp-projects",
-          "group": "navigation@2"
-        },
-        {
-          "command": "basecamp.signOut",
-          "when": "view == basecamp-projects && basecamp.isAuthenticated",
-          "group": "overflow"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "basecamp.openInBrowser",
-          "when": "viewItem == basecamp-project || viewItem == basecamp-campfire || viewItem == basecamp-message || viewItem == basecamp-todolist",
-          "group": "inline"
-        },
-        {
-          "command": "basecamp.createMessage",
-          "when": "viewItem == basecamp-dock-message_board",
-          "group": "inline"
-        },
-        {
-          "command": "basecamp.createTodo",
-          "when": "viewItem == basecamp-dock-todoset || viewItem == basecamp-todolist",
-          "group": "inline"
-        }
-      ]
-    },
-    "viewsWelcome": [
-      {
-        "view": "basecamp-projects",
-        "contents": "Connect your Basecamp account to get started.\n[Sign In](command:basecamp.signIn)"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "workbench.view.extension.basecamp-explorer",
-        "key": "ctrl+shift+b",
-        "mac": "cmd+shift+b"
-      }
-    ],
-    "configuration": {
-      "title": "Basecamp",
-      "properties": {
-        "basecamp.pollingInterval": {
-          "type": "number",
-          "default": 15,
-          "minimum": 5,
-          "description": "Polling interval in seconds for Campfire chat"
-        }
-      }
-    }
-  },
-  "scripts": {
-    "compile": "tsc --noEmit && node esbuild.js",
-    "watch": "node esbuild.js --watch",
-    "package": "tsc --noEmit && node esbuild.js --production",
-    "vscode:prepublish": "npm run package"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.85.0",
-    "typescript": "^5.3.0",
-    "esbuild": "^0.19.0"
-  }
+	"name": "basecamp-vscode",
+	"displayName": "Basecamp for VSCode",
+	"description": "Basecamp projects, campfire chat, to-dos, and messages inside VSCode",
+	"version": "0.3.2",
+	"publisher": "Wonono",
+	"engines": {
+		"vscode": "^1.85.0"
+	},
+	"icon": "resources/icon.png",
+	"main": "./dist/extension.js",
+	"extensionKind": [
+		"ui"
+	],
+	"categories": [
+		"Other"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wonono/basecamp-vscode"
+	},
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "basecamp-explorer",
+					"title": "Basecamp",
+					"icon": "resources/basecamp-icon.svg"
+				}
+			]
+		},
+		"views": {
+			"basecamp-explorer": [
+				{
+					"id": "basecamp-projects",
+					"name": "Projects",
+					"type": "tree"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "basecamp.signIn",
+				"title": "Sign In",
+				"category": "Basecamp"
+			},
+			{
+				"command": "basecamp.signOut",
+				"title": "Sign Out",
+				"category": "Basecamp",
+				"icon": "$(sign-out)"
+			},
+			{
+				"command": "basecamp.refresh",
+				"title": "Refresh",
+				"category": "Basecamp",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "basecamp.openCampfire",
+				"title": "Open Campfire",
+				"category": "Basecamp"
+			},
+			{
+				"command": "basecamp.openMessage",
+				"title": "Open Message",
+				"category": "Basecamp"
+			},
+			{
+				"command": "basecamp.openTodoList",
+				"title": "Open To-do List",
+				"category": "Basecamp"
+			},
+			{
+				"command": "basecamp.openInBrowser",
+				"title": "Open in Basecamp",
+				"category": "Basecamp",
+				"icon": "$(link-external)"
+			},
+			{
+				"command": "basecamp.search",
+				"title": "Search",
+				"category": "Basecamp",
+				"icon": "$(search)"
+			},
+			{
+				"command": "basecamp.createMessage",
+				"title": "New Message",
+				"category": "Basecamp",
+				"icon": "$(add)"
+			},
+			{
+				"command": "basecamp.createTodo",
+				"title": "New To-do",
+				"category": "Basecamp",
+				"icon": "$(add)"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "basecamp.refresh",
+					"when": "view == basecamp-projects",
+					"group": "navigation@1"
+				},
+				{
+					"command": "basecamp.search",
+					"when": "view == basecamp-projects",
+					"group": "navigation@2"
+				},
+				{
+					"command": "basecamp.signOut",
+					"when": "view == basecamp-projects && basecamp.isAuthenticated",
+					"group": "overflow"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "basecamp.openInBrowser",
+					"when": "viewItem == basecamp-project || viewItem == basecamp-campfire || viewItem == basecamp-message || viewItem == basecamp-todolist",
+					"group": "inline"
+				},
+				{
+					"command": "basecamp.createMessage",
+					"when": "viewItem == basecamp-dock-message_board",
+					"group": "inline"
+				},
+				{
+					"command": "basecamp.createTodo",
+					"when": "viewItem == basecamp-dock-todoset || viewItem == basecamp-todolist",
+					"group": "inline"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "basecamp-projects",
+				"contents": "Connect your Basecamp account to get started.\n[Sign In](command:basecamp.signIn)"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "workbench.view.extension.basecamp-explorer",
+				"key": "ctrl+shift+b",
+				"mac": "cmd+shift+b"
+			}
+		],
+		"configuration": {
+			"title": "Basecamp",
+			"properties": {
+				"basecamp.pollingInterval": {
+					"type": "number",
+					"default": 15,
+					"minimum": 5,
+					"description": "Polling interval in seconds for Campfire chat"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"compile": "tsc --noEmit && node esbuild.js",
+		"watch": "node esbuild.js --watch",
+		"package": "tsc --noEmit && node esbuild.js --production",
+		"vscode:prepublish": "npm run package"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.85.0",
+		"typescript": "^5.3.0",
+		"esbuild": "^0.19.0"
+	}
 }
